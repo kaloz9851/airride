@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main, master ]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-ipa:
     name: Build Unsigned IPA for Sideloadly / AltStore
@@ -30,8 +33,8 @@ jobs:
         working-directory: iOSApp
         run: |
           xcodebuild clean build \
-            -project TothWorksAirRide.xcodeproj \
-            -scheme TothWorksAirRide \
+            -project TothWorksAirRideSensor.xcodeproj \
+            -scheme TothWorksAirRideSensor \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
@@ -44,7 +47,7 @@ jobs:
         working-directory: iOSApp
         run: |
           mkdir -p Payload
-          cp -R "build/Build/Products/Release-iphoneos/TothWorks Air Ride Sensor.app" Payload/
+          cp -R build/Build/Products/Release-iphoneos/*.app Payload/
           zip -r -9 "TothWorks Air Ride Sensor.ipa" Payload
 
       - name: Elkészült IPA feltöltése (Letölthető Artifact)
