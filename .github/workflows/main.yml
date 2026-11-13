@@ -1,0 +1,55 @@
+name: Build iOS & iPadOS IPA (TothWorks Air Ride Sensor)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-ipa:
+    name: Build Unsigned IPA for Sideloadly / AltStore
+    runs-on: macos-latest
+    steps:
+      - name: Forráskód letöltése
+        uses: actions/checkout@v4
+
+      - name: iOSApp.zip kibontása
+        run: |
+          if [ -f "iOSApp.zip" ]; then
+            unzip -o iOSApp.zip
+          fi
+
+      - name: XcodeGen ellenőrzése
+        run: which xcodegen || brew install xcodegen
+
+      - name: Xcode projekt generálása
+        working-directory: iOSApp
+        run: xcodegen generate
+
+      - name: iOS és iPadOS alkalmazás fordítása (Release)
+        working-directory: iOSApp
+        run: |
+          xcodebuild clean build \
+            -project TothWorksAirRide.xcodeproj \
+            -scheme TothWorksAirRide \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: IPA telepítőcsomag összeállítása
+        working-directory: iOSApp
+        run: |
+          mkdir -p Payload
+          cp -R "build/Build/Products/Release-iphoneos/TothWorks Air Ride Sensor.app" Payload/
+          zip -r -9 "TothWorks Air Ride Sensor.ipa" Payload
+
+      - name: Elkészült IPA feltöltése (Letölthető Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: TothWorks-Air-Ride-Sensor-iOS-IPA
+          path: iOSApp/TothWorks Air Ride Sensor.ipa
+          if-no-files-found: error
